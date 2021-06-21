@@ -7,5 +7,10 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "TechnologicNick",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "sql-template-strings": "^2.2.2",
+    "sqlite": "^4.0.23",
+    "sqlite3": "^5.0.2"
+  }
 }
