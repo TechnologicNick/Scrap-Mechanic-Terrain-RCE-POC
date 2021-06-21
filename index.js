@@ -2,70 +2,48 @@ const sqlite3 = require("sqlite3");
 const { open } = require("sqlite");
 const SQL = require("sql-template-strings");
 const fs = require("fs");
-const Blob = require("buffer").Blob;
 const LZ4 = require("lz4");
 
 
 (async () => {
+
+    // Open the save file
     const db = await open({
         filename: "./TerrainRCE_FLAT.db",
         mode: sqlite3.OPEN_READWRITE,
         driver: sqlite3.Database
     });
 
+    // Get the data containing the terrain script path and classname
     const { data: dataCompressed } = await db.get(SQL`SELECT data FROM GenericData WHERE channel = 11`);
 
-    console.log("dataCompressed", dataCompressed);
-    fs.writeFileSync("./data.comp.bin", dataCompressed);
+    console.log("Compressed data read from the save file:", {
+        buffer: dataCompressed,
+        string: dataCompressed.toString()
+    });
 
-    const blobCompressed = new Blob(dataCompressed);
+    await fs.promises.writeFile("./data_compressed.bin", dataCompressed);
 
 
-    // let data = decompress(Buffer.concat([new Uint8Array([0x04, 0x22, 0x4D, 0x18]), dataCompressed]));
-            
-    // console.log(`data`, data);
-    // fs.writeFileSync("./data.bin", data);
 
+    // Allocate a buffer to write the decompressed data to
     let uncompressed = Buffer.alloc(128);
 
-    let decompressedMessages = {}
+    // Skip the header (first 11 bytes)
+    let buff = dataCompressed.slice(12);
 
-    for (let i = 0; i <= blobCompressed.size; i++) {
-        for (let j = blobCompressed.size; j >= 0; j--) {
-            try{
-                if (i >= j || i === 21) continue;
+    // Decompress
+    let uncompressedSize = LZ4.decodeBlock(buff, uncompressed)
+    
+    // Resize the buffer to only include the decompressed data
+    let data = uncompressed.slice(0, uncompressedSize)
 
-                // let data = decompress(await blobCompressed.slice(i, j).arrayBuffer());
-                // let buff = Buffer.concat([new Uint8Array([0x04, 0x22, 0x4D, 0x18]), dataCompressed.slice(i, j)]);
-                let buff = dataCompressed.slice(i, j);
-                // console.log(i, j, buff);
+    console.log("Decompressed data, excluding header:", {
+        buffer: data,
+        string: data.toString()
+    });
 
-                let uncompressedSize = LZ4.decodeBlock(buff, uncompressed)
-                // console.log(uncompressedSize);
-                let sliced = uncompressed.slice(0, uncompressedSize)
+    await fs.promises.writeFile("./data.bin", data);
 
-
-                let str = sliced.toString();
-                // if (str.length > 0) console.log(`i=${i} j=${j} data`, str);
-                // fs.writeFileSync("./data.bin", blob);
-
-                decompressedMessages[`i=${i} j=${j}`] = str;
-            } catch (ex) {
-                console.error(`i=${i} failed`, ex.message);
-                // throw ex;
-            }
-        }
-        // break;
-    }
-
-    let filtered = Object.fromEntries(
-        Object.entries(decompressedMessages).filter(
-            ([key, value]) => {
-                return value.includes("$GAME_DATA/Scripts/game/worlds/CreativeFlatWorld.lua")
-            }
-        )
-    );
-
-    console.log(filtered);
 
 })();
