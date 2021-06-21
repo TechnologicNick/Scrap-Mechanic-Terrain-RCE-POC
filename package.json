@@ -1,0 +1,11 @@
+{
+  "name": "scrap-mechanic-terrain-rce-poc",
+  "version": "1.0.0",
+  "description": "A Proof Of Concept that shows a Remote Code Execution vulnerability in the terrain scripts of Scrap Mechanic",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "TechnologicNick",
+  "license": "ISC"
+}
