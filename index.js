@@ -102,11 +102,28 @@ const LZ4 = require("lz4");
     let compressedSize = LZ4.encodeBlock(reconstructed, outputBuffer)
 
     // Resize the buffer to only include the compressed data
-    let outputCompressed = outputBuffer.slice(0, compressedSize)
+    let reconstructedCompressed = outputBuffer.slice(0, compressedSize)
 
     console.log("Compressed reconstructed data, excluding header:", {
-        buffer: outputCompressed,
-        string: outputCompressed.toString()
+        buffer: reconstructedCompressed,
+        string: reconstructedCompressed.toString()
     });
+
+
+
+    /**
+     * Update the database with the reconstructed data
+     */
+
+    // Add the header back
+    let out = Buffer.concat([
+        Buffer.from(dataCompressed.slice(0, 12)),
+        reconstructedCompressed
+    ])
+
+    let result = await db.run(SQL`UPDATE GenericData SET data = ${out} WHERE channel = 11`);
+    console.log(result);
+    
+    await db.close();
 
 })();
