@@ -40,6 +40,11 @@ const LZ4 = require("lz4");
     // Skip the header (first 11 bytes)
     let buff = dataCompressed.slice(12);
 
+    console.log("Compressed data, excluding header:", {
+        buffer: buff,
+        string: buff.toString()
+    });
+
     // Decompress
     let uncompressedSize = LZ4.decodeBlock(buff, uncompressed)
     
@@ -85,5 +90,23 @@ const LZ4 = require("lz4");
     });
 
 
+
+    /**
+     * Compress the reconstructed data
+     */
+
+    // Allocate a buffer to write the compressed data to
+    let outputBuffer = Buffer.alloc(LZ4.encodeBound(reconstructed.length));
+
+    // Compress
+    let compressedSize = LZ4.encodeBlock(reconstructed, outputBuffer)
+
+    // Resize the buffer to only include the compressed data
+    let outputCompressed = outputBuffer.slice(0, compressedSize)
+
+    console.log("Compressed reconstructed data, excluding header:", {
+        buffer: outputCompressed,
+        string: outputCompressed.toString()
+    });
 
 })();
