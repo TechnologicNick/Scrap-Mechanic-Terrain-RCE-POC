@@ -7,6 +7,10 @@ const LZ4 = require("lz4");
 
 (async () => {
 
+    /**
+     * Getting the data out of the save file
+     */
+
     // Open the save file
     const db = await open({
         filename: "./TerrainRCE_FLAT.db",
@@ -26,6 +30,10 @@ const LZ4 = require("lz4");
 
 
 
+    /**
+     * Decompressing the data
+     */
+    
     // Allocate a buffer to write the decompressed data to
     let uncompressed = Buffer.alloc(128);
 
@@ -44,6 +52,38 @@ const LZ4 = require("lz4");
     });
 
     await fs.promises.writeFile("./data.bin", data);
+
+
+
+    /**
+     * Constructing new data
+     */
+
+    // Seed
+    let seed = Buffer.from(data.slice(0, 4));
+
+    let filename = "$CONTENT_637efa72-b1cc-4b16-86c3-222ecad21bcd/Scripts/terrain/terrain_rce_flat.lua"
+    let classname = "CreativeFlatWorld"
+
+    let uint16_to_uint8array = uint16 => new Uint8Array([uint16 >> 8, uint16]);
+
+    let reconstructed = Buffer.concat([
+        Buffer.from(data.slice(0, 4)), // Seed
+
+        uint16_to_uint8array(filename.length),
+        Buffer.from(filename),
+
+        uint16_to_uint8array(classname.length),
+        Buffer.from(classname),
+
+        new Uint8Array(10) // For somereason ends with ten 0x00 bytes
+    ])
+
+    console.log("Reconstructed data, excluding header:", {
+        buffer: reconstructed,
+        string: reconstructed.toString()
+    });
+
 
 
 })();
