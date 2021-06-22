@@ -115,11 +115,19 @@ const LZ4 = require("lz4");
      * Update the database with the reconstructed data
      */
 
+    let uint32_to_uint8array = uint32 => new Uint8Array([uint32 >> 24, uint32 >> 16, uint32 >> 8, uint32]);
+
     // Add the header back
     let out = Buffer.concat([
-        Buffer.from(dataCompressed.slice(0, 12)),
+        Buffer.from(dataCompressed.slice(0, 8)),
+        uint32_to_uint8array(compressedSize),
         reconstructedCompressed
-    ])
+    ]);
+
+    console.log("Compressed reconstructed data, including header:", {
+        buffer: out,
+        string: out.toString()
+    });
 
     let result = await db.run(SQL`UPDATE GenericData SET data = ${out} WHERE channel = 11`);
     console.log(result);
